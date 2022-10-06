@@ -29,7 +29,6 @@ func catchCtrlC(cancel context.CancelFunc) {
 		os.Interrupt,
 		syscall.SIGTERM,
 		syscall.SIGINT,
-		syscall.SIGPIPE,
 	)
 
 	go func() {
