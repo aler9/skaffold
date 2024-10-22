@@ -16,7 +16,9 @@ package remote
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
+	"fmt"
 	"io"
 	"net"
 	"net/http"
@@ -26,6 +28,7 @@ import (
 	"github.com/google/go-containerregistry/internal/retry"
 	"github.com/google/go-containerregistry/pkg/authn"
 	"github.com/google/go-containerregistry/pkg/logs"
+	"github.com/google/go-containerregistry/pkg/name"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/remote/transport"
 )
@@ -125,9 +128,30 @@ var DefaultTransport http.RoundTripper = &http.Transport{
 	MaxIdleConnsPerHost: 50,
 }
 
-func makeOptions(opts ...Option) (*options, error) {
+func makeOptions(target resource, opts ...Option) (*options, error) {
+	insecure := false
+	if target != nil {
+		reg, ok := target.(name.Registry)
+		if !ok {
+			repo, ok := target.(name.Repository)
+			if !ok {
+				return nil, fmt.Errorf("unexpected resource: %T", target)
+			}
+			reg = repo.Registry
+		}
+		insecure = reg.IsInsecure()
+	}
+
+	var tr http.RoundTripper
+	if insecure {
+		tr = DefaultTransport.(*http.Transport).Clone()
+		tr.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+	} else {
+		tr = DefaultTransport
+	}
+
 	o := &options{
-		transport:        DefaultTransport,
+		transport:        tr,
 		platform:         defaultPlatform,
 		context:          context.Background(),
 		jobs:             defaultJobs,

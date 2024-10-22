@@ -45,7 +45,7 @@ type Taggable interface {
 
 // Write pushes the provided img to the specified image reference.
 func Write(ref name.Reference, img v1.Image, options ...Option) (rerr error) {
-	o, err := makeOptions(options...)
+	o, err := makeOptions(ref.Context(), options...)
 	if err != nil {
 		return err
 	}
@@ -656,7 +656,7 @@ func scopesForUploadingImage(repo name.Repository, layers []v1.Layer) []string {
 // WriteIndex will attempt to push all of the referenced manifests before
 // attempting to push the ImageIndex, to retain referential integrity.
 func WriteIndex(ref name.Reference, ii v1.ImageIndex, options ...Option) (rerr error) {
-	o, err := makeOptions(options...)
+	o, err := makeOptions(ref.Context(), options...)
 	if err != nil {
 		return err
 	}
@@ -668,7 +668,7 @@ func WriteIndex(ref name.Reference, ii v1.ImageIndex, options ...Option) (rerr e
 
 // WriteLayer uploads the provided Layer to the specified repo.
 func WriteLayer(repo name.Repository, layer v1.Layer, options ...Option) (rerr error) {
-	o, err := makeOptions(options...)
+	o, err := makeOptions(repo, options...)
 	if err != nil {
 		return err
 	}
@@ -705,7 +705,7 @@ func Tag(tag name.Tag, t Taggable, options ...Option) error {
 // should ensure that all blobs or manifests that are referenced by t exist
 // in the target registry.
 func Put(ref name.Reference, t Taggable, options ...Option) error {
-	o, err := makeOptions(options...)
+	o, err := makeOptions(ref.Context(), options...)
 	if err != nil {
 		return err
 	}
